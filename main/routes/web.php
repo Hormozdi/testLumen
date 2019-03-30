@@ -20,7 +20,7 @@ $router->post('auth/login', [ 'uses' => 'AuthController@authenticate' ]);
 
 $router->group(['middleware' => 'auth'], function () use ($router) {
     $router->get('users', function() {
-        $users = \App\User::all();
-        return response()->json($users);
+        $user = Auth::user();
+        return response()->json($user);
     });
 });
