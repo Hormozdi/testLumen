@@ -6,6 +6,10 @@ use App\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
+use Exception;
+use Firebase\JWT\JWT;
+use Firebase\JWT\ExpiredException;
+
 class AuthServiceProvider extends ServiceProvider
 {
     /**
@@ -13,7 +17,7 @@ class AuthServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register() 
     {
         //
     }
@@ -31,9 +35,22 @@ class AuthServiceProvider extends ServiceProvider
         // the User instance via an API token or any other method necessary.
 
         $this->app['auth']->viaRequest('api', function ($request) {
-            if ($request->input('api_token')) {
-                return User::where('api_token', $request->input('api_token'))->first();
+
+            $token = $request->header('token');
+            if(!$token) return null;
+
+            try {
+                $credentials = JWT::decode($token, env('JWT_SECRET'), ['HS256']);
+            } catch(ExpiredException $e) {
+                return null;
+            } catch(Exception $e) {
+                return null;
             }
+
+            $user = User::find($credentials->sub)->first();
+            if (!$user || !$user->status) return null;
+
+            return $user; 
         });
     }
 }
